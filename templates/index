@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPT Test - Auto Detection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 32px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            color: #718096;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .instructions {
+            background: #f7fafc;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        .instructions h3 {
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+        
+        .instructions ol {
+            margin-left: 20px;
+            color: #4a5568;
+        }
+        
+        .instructions li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+        
+        .auto-detect-notice {
+            background: #c6f6d5;
+            border: 2px solid #48bb78;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .auto-detect-notice strong {
+            color: #22543d;
+        }
+        
+        .button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .button:hover:not(:disabled) {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .button:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .calibration-phase {
+            display: none;
+            background: #fef5e7;
+            border: 2px solid #f39c12;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .calibration-phase.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        
+        .calibration-phase h3 {
+            color: #e67e22;
+            margin-bottom: 10px;
+        }
+        
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 18px;
+            min-height: 30px;
+            color: #4a5568;
+        }
+        
+        .timer {
+            font-size: 48px;
+            font-weight: bold;
+            color: #667eea;
+            text-align: center;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .voice-indicator {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .voice-indicator.active {
+            display: block;
+        }
+        
+        .voice-bar-container {
+            width: 100%;
+            height: 40px;
+            background: #e2e8f0;
+            border-radius: 20px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .voice-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #48bb78 0%, #38a169 100%);
+            width: 0%;
+            transition: width 0.1s;
+        }
+        
+        .results {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 12px;
+            display: none;
+        }
+        
+        .results.show {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .results.RED {
+            background: #fed7d7;
+            border: 2px solid #fc8181;
+        }
+        
+        .results.ORANGE {
+            background: #feebc8;
+            border: 2px solid #f6ad55;
+        }
+        
+        .results.YELLOW {
+            background: #fefcbf;
+            border: 2px solid #f6e05e;
+        }
+        
+        .results.GREEN {
+            background: #c6f6d5;
+            border: 2px solid #68d391;
+        }
+        
+        .results h2 {
+            margin-bottom: 15px;
+            color: #2d3748;
+        }
+        
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        .result-row:last-child {
+            border-bottom: none;
+        }
+        
+        .result-label {
+            font-weight: 600;
+            color: #2d3748;
+        }
+        
+        .result-value {
+            color: #4a5568;
+            text-align: right;
+        }
+        
+        .debug-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .debug-info summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        
+        .debug-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 MPT Test</h1>
+        <p class="subtitle">Maximum Phonation Time - Auto Detection</p>
+        
+        <div class="auto-detect-notice">
+            <strong>✨ Fully Automatic!</strong><br>
+            The test automatically detects when you start and stop speaking.
+        </div>
+        
+        <div class="instructions">
+            <h3>📋 Instructions:</h3>
+            <ol>
+                <li><strong>Click "Start Test"</strong> - The system will calibrate to ambient noise</li>
+                <li><strong>Wait for "Ready"</strong> signal</li>
+                <li><strong>Take a deep breath</strong></li>
+                <li>Say "<strong>ahhhhhh</strong>" as long as you can</li>
+                <li><strong>Test auto-stops</strong> when you finish (1.5s of silence)</li>
+            </ol>
+        </div>
+        
+        <button id="startBtn" class="button" onclick="startTest()">
+            🎙️ Start Test
+        </button>
+        
+        <div class="calibration-phase" id="calibrationPhase">
+            <h3>🔊 Calibrating...</h3>
+            <p>Please remain quiet for ambient noise measurement</p>
+            <div class="voice-bar-container">
+                <div class="voice-bar" id="calibrationBar"></div>
+            </div>
+        </div>
+        
+        <div class="voice-indicator" id="voiceIndicator">
+            <p>Voice Level:</p>
+            <div class="voice-bar-container">
+                <div class="voice-bar" id="voiceBar"></div>
+            </div>
+        </div>
+        
+        <div class="status" id="status"></div>
+        <div class="timer" id="timer"></div>
+        
+        <div class="results" id="results">
+            <h2>📊 Test Results</h2>
+            <div class="result-row">
+                <span class="result-label">MPT Duration:</span>
+                <span class="result-value" id="mptValue">--</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">Urgency Level:</span>
+                <span class="result-value" id="urgency">--</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">ESI Triage Level:</span>
+                <span class="result-value" id="esiLevel">--</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">Clinical Category:</span>
+                <span class="result-value" id="category">--</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">Recommended Action:</span>
+                <span class="result-value" id="action">--</span>
+            </div>
+            
+            <details class="debug-info">
+                <summary>🔍 Technical Details</summary>
+                <div class="debug-row">
+                    <span>Noise Level:</span>
+                    <span id="debugNoise">--</span>
+                </div>
+                <div class="debug-row">
+                    <span>VAD Mode:</span>
+                    <span id="debugVAD">--</span>
+                </div>
+                <div class="debug-row">
+                    <span>Speech %:</span>
+                    <span id="debugSpeech">--</span>
+                </div>
+            </details>
+        </div>
+    </div>
+    
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let timerInterval;
+        let audioContext;
+        let analyser;
+        
+        async function startTest() {
+            const startBtn = document.getElementById('startBtn');
+            const status = document.getElementById('status');
+            const timer = document.getElementById('timer');
+            const results = document.getElementById('results');
+            const calibrationPhase = document.getElementById('calibrationPhase');
+            const voiceIndicator = document.getElementById('voiceIndicator');
+            
+            // Reset UI
+            audioChunks = [];
+            results.classList.remove('show');
+            timer.textContent = '';
+            status.textContent = '';
+            voiceIndicator.classList.remove('active');
+            
+            try {
+                // Request microphone access
+                status.textContent = '🎤 Requesting microphone access...';
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        sampleRate: 16000,
+                        channelCount: 1,
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false
+                    }
+                });
+                
+                // Setup audio visualization for feedback
+                audioContext = new AudioContext();
+                const source = audioContext.createMediaStreamSource(stream);
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+                source.connect(analyser);
+                
+                // Phase 1: Calibration (0.5 seconds)
+                startBtn.disabled = true;
+                calibrationPhase.classList.add('active');
+                status.textContent = '🔊 Calibrating to ambient noise...';
+                
+                // Show noise level during calibration
+                const calibrationInterval = setInterval(() => {
+                    const volume = getVolume();
+                    document.getElementById('calibrationBar').style.width = volume + '%';
+                }, 50);
+                
+                // Wait 500ms for calibration
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                clearInterval(calibrationInterval);
+                calibrationPhase.classList.remove('active');
+                
+                // Phase 2: Ready to record
+                status.textContent = '✅ Ready! Take a deep breath, then say "ahhhh"';
+                voiceIndicator.classList.add('active');
+                
+                // Create recorder
+                mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: 'audio/webm;codecs=opus'
+                });
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = async () => {
+                    voiceIndicator.classList.remove('active');
+                    status.textContent = '⏳ Processing audio...';
+                    
+                    // Convert to blob
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    
+                    // Convert to base64
+                    const reader = new FileReader();
+                    reader.readAsDataURL(audioBlob);
+                    
+                    reader.onloadend = async () => {
+                        const base64Audio = reader.result.split(',')[1];
+                        
+                        // Send to backend
+                        try {
+                            const response = await fetch('/api/analyze-mpt', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    audio_data: base64Audio
+                                })
+                            });
+                            
+                            const result = await response.json();
+                            
+                            if (result.success) {
+                                displayResults(result);
+                            } else {
+                                status.textContent = '❌ ' + (result.error || 'Processing failed');
+                                console.error('Error:', result);
+                            }
+                        } catch (error) {
+                            status.textContent = '❌ Network error: ' + error.message;
+                            console.error('Network error:', error);
+                        }
+                    };
+                    
+                    // Stop all media tracks
+                    stream.getTracks().forEach(track => track.stop());
+                    if (audioContext) {
+                        audioContext.close();
+                    }
+                    startBtn.disabled = false;
+                };
+                
+                // Start recording
+                mediaRecorder.start(100);
+                status.textContent = '🎤 Recording... Speak now!';
+                
+                // Show live voice level
+                const volumeInterval = setInterval(() => {
+                    if (mediaRecorder && mediaRecorder.state === 'recording') {
+                        const volume = getVolume();
+                        document.getElementById('voiceBar').style.width = volume + '%';
+                    } else {
+                        clearInterval(volumeInterval);
+                    }
+                }, 50);
+                
+                // Show timer (for user feedback only)
+                let seconds = 0;
+                timerInterval = setInterval(() => {
+                    seconds += 0.1;
+                    timer.textContent = seconds.toFixed(1) + 's';
+                }, 100);
+                
+                // Auto-stop after 30 seconds max
+                const autoStopTimeout = setTimeout(() => {
+                    if (mediaRecorder && mediaRecorder.state === 'recording') {
+                        stopRecording();
+                    }
+                }, 30000);
+                
+                // Allow manual stop
+                startBtn.onclick = () => {
+                    clearTimeout(autoStopTimeout);
+                    stopRecording();
+                };
+                startBtn.textContent = '⏹️ Stop Recording';
+                startBtn.disabled = false;
+                
+            } catch (error) {
+                status.textContent = '❌ Microphone access denied. Please allow microphone access.';
+                console.error('Microphone error:', error);
+                startBtn.disabled = false;
+            }
+        }
+        
+        function getVolume() {
+            if (!analyser) return 0;
+            
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(dataArray);
+            
+            const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+            return Math.min(100, (average / 256) * 200); // Scale to 0-100%
+        }
+        
+        function stopRecording() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+            }
+            const startBtn = document.getElementById('startBtn');
+            startBtn.textContent = '🎙️ Start Test';
+            startBtn.onclick = startTest;
+        }
+        
+        function displayResults(result) {
+            const results = document.getElementById('results');
+            const status = document.getElementById('status');
+            
+            document.getElementById('mptValue').textContent = result.mpt + ' seconds';
+            document.getElementById('urgency').textContent = result.classification.urgency;
+            document.getElementById('esiLevel').textContent = 'ESI-' + result.classification.esi_level;
+            document.getElementById('category').textContent = result.classification.category;
+            document.getElementById('action').textContent = result.classification.action;
+            
+            // Show debug info if available
+            if (result.debug_info) {
+                document.getElementById('debugNoise').textContent = 
+                    result.debug_info.noise_threshold.toFixed(4);
+                document.getElementById('debugVAD').textContent = 
+                    'Mode ' + result.debug_info.vad_aggressiveness;
+                document.getElementById('debugSpeech').textContent = 
+                    result.debug_info.speech_percentage + '%';
+            }
+            
+            results.className = 'results show ' + result.classification.color;
+            status.textContent = '✅ Test Complete!';
+            
+            document.getElementById('timer').textContent = '';
+        }
+    </script>
+</body>
+</html>
