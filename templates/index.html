@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPT Test - Maximum Phonation Time</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 32px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            color: #718096;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .instructions {
+            background: #f7fafc;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        .instructions h3 {
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+        
+        .instructions ol {
+            margin-left: 20px;
+            color: #4a5568;
+        }
+        
+        .instructions li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+        
+        .button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .button:hover:not(:disabled) {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .button:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 18px;
+            min-height: 30px;
+            color: #4a5568;
+        }
+        
+        .timer {
+            font-size: 48px;
+            font-weight: bold;
+            color: #667eea;
+            text-align: center;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .results {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 12px;
+            display: none;
+        }
+        
+        .results.show {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .results.RED {
+            background: #fed7d7;
+            border: 2px solid #fc8181;
+        }
+        
+        .results.ORANGE {
+            background: #feebc8;
+            border: 2px solid #f6ad55;
+        }
+        
+        .results.YELLOW {
+            background: #fefcbf;
+            border: 2px solid #f6e05e;
+        }
+        
+        .results.GREEN {
+            background: #c6f6d5;
+            border: 2px solid #68d391;
+        }
+        
+        .results h2 {
+            margin-bottom: 15px;
+            color: #2d3748;
+        }
+        
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        .result-row:last-child {
+            border-bottom: none;
+        }
+        
+        .result-label {
+            font-weight: 600;
+            color: #2d3748;
+        }
+        
+        .result-value {
+            color: #4a5568;
+            text-align: right;
+        }
+        
+        .recording-indicator {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .recording-indicator.active {
+            display: block;
+        }
+        
+        .pulse {
+            width: 20px;
+            height: 20px;
+            background: #fc8181;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 1.5s infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 MPT Test</h1>
+        <p class="subtitle">Maximum Phonation Time Measurement</p>
+        
+        <div class="instructions">
+            <h3>📋 Instructions:</h3>
+            <ol>
+                <li>Take the <strong>deepest breath</strong> you can</li>
+                <li>Click "<strong>Start Test</strong>" below</li>
+                <li>Say "<strong>ahhhhhh</strong>" as long as you can (like at the doctor)</li>
+                <li>Maintain a comfortable, steady volume</li>
+                <li>The test ends automatically when you stop speaking</li>
+            </ol>
+        </div>
+        
+        <button id="startBtn" class="button" onclick="startTest()">
+            🎙️ Start Test
+        </button>
+        
+        <div class="recording-indicator" id="recordingIndicator">
+            <span class="pulse"></span>
+            <span>Recording...</span>
+        </div>
+        
+        <div class="status" id="status"></div>
+        <div class="timer" id="timer"></div>
+        
+        <div class="results" id="results">
+            <h2>📊 Test Results</h2>
+            <div class="result-row">
+                <span class="result-label">MPT Duration:</span>
+                <span class="result-value" id="mptValue">--</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">Urgency Level:</span>
+                <span class="result-value" id="urgency">--</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">ESI Triage Level:</span>
+                <span class="result-value" id="esiLevel">--</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">Clinical Category:</span>
+                <span class="result-value" id="category">--</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">Recommended Action:</span>
+                <span class="result-value" id="action">--</span>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let timerInterval;
+        
+        async function startTest() {
+            const startBtn = document.getElementById('startBtn');
+            const status = document.getElementById('status');
+            const timer = document.getElementById('timer');
+            const results = document.getElementById('results');
+            const recordingIndicator = document.getElementById('recordingIndicator');
+            
+            // Reset UI
+            audioChunks = [];
+            results.classList.remove('show');
+            timer.textContent = '';
+            status.textContent = '';
+            
+            try {
+                // Request microphone access
+                status.textContent = '🎤 Requesting microphone access...';
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        sampleRate: 16000,
+                        channelCount: 1,
+                        echoCancellation: false,
+                        noiseSuppression: false
+                    }
+                });
+                
+                // Create recorder
+                mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: 'audio/webm'
+                });
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = async () => {
+                    recordingIndicator.classList.remove('active');
+                    status.textContent = '⏳ Processing audio...';
+                    
+                    // Convert to blob
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    
+                    // Convert to base64
+                    const reader = new FileReader();
+                    reader.readAsDataURL(audioBlob);
+                    
+                    reader.onloadend = async () => {
+                        const base64Audio = reader.result.split(',')[1];
+                        
+                        // Send to backend
+                        try {
+                            const response = await fetch('/api/analyze-mpt', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    audio_data: base64Audio
+                                })
+                            });
+                            
+                            const result = await response.json();
+                            
+                            if (result.success) {
+                                displayResults(result);
+                            } else {
+                                status.textContent = '❌ Error: ' + (result.error || 'Processing failed');
+                            }
+                        } catch (error) {
+                            status.textContent = '❌ Network error: ' + error.message;
+                        }
+                    };
+                    
+                    // Stop all media tracks
+                    stream.getTracks().forEach(track => track.stop());
+                    startBtn.disabled = false;
+                };
+                
+                // Start recording
+                mediaRecorder.start(100); // Collect data every 100ms
+                startBtn.disabled = true;
+                recordingIndicator.classList.add('active');
+                status.textContent = '🎤 Recording... Say "ahhhh" now!';
+                
+                // Show timer
+                let seconds = 0;
+                timerInterval = setInterval(() => {
+                    seconds += 0.1;
+                    timer.textContent = seconds.toFixed(1) + 's';
+                }, 100);
+                
+                // Auto-stop after 30 seconds
+                const autoStopTimeout = setTimeout(() => {
+                    if (mediaRecorder && mediaRecorder.state === 'recording') {
+                        stopRecording();
+                    }
+                }, 30000);
+                
+                // Allow manual stop
+                startBtn.onclick = () => {
+                    clearTimeout(autoStopTimeout);
+                    stopRecording();
+                };
+                startBtn.textContent = '⏹️ Stop Recording';
+                startBtn.disabled = false;
+                
+            } catch (error) {
+                status.textContent = '❌ Microphone access denied. Please allow microphone access and try again.';
+                console.error('Microphone error:', error);
+                startBtn.disabled = false;
+            }
+        }
+        
+        function stopRecording() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+            }
+            const startBtn = document.getElementById('startBtn');
+            startBtn.textContent = '🎙️ Start Test';
+            startBtn.onclick = startTest;
+        }
+        
+        function displayResults(result) {
+            const results = document.getElementById('results');
+            const status = document.getElementById('status');
+            
+            document.getElementById('mptValue').textContent = result.mpt + ' seconds';
+            document.getElementById('urgency').textContent = result.classification.urgency;
+            document.getElementById('esiLevel').textContent = 'ESI-' + result.classification.esi_level;
+            document.getElementById('category').textContent = result.classification.category;
+            document.getElementById('action').textContent = result.classification.action;
+            
+            results.className = 'results show ' + result.classification.color;
+            status.textContent = '✅ Test Complete!';
+            
+            document.getElementById('timer').textContent = '';
+        }
+    </script>
+</body>
+</html>
