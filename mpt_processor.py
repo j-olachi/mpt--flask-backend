@@ -161,11 +161,17 @@ def detect_speech_with_calibration(wav_data):
         # Current time
         current_time = frame_num * FRAME_DURATION_MS / 1000.0
         
-        # Detect speech in this frame
-        try:
-            is_speech = vad.is_speech(frame_bytes, SAMPLE_RATE)
-        except:
-            is_speech = False
+        # Detect speech in this frame energy gate
+       rms = frame_rms(frame_bytes)
+energy_th = energy_threshold_from_noise(noise_threshold)
+
+try:
+    vad_says_speech = vad.is_speech(frame_bytes, SAMPLE_RATE)
+except:
+    vad_says_speech = False
+
+# Final decision: must pass BOTH VAD and energy gate
+is_speech = vad_says_speech and (rms >= energy_th)
         
         # Update speech state
         if is_speech:
@@ -290,6 +296,22 @@ def determine_vad_aggressiveness(noise_level):
     
     return aggressiveness
 
+def frame_rms(frame_bytes):
+    samples = np.frombuffer(frame_bytes, dtype=np.int16).astype(np.float32)
+    return float(np.sqrt(np.mean(samples * samples)) + 1e-12)
+
+
+"ADDED CHAT GPT CODE"
+def energy_threshold_from_noise(noise_level_norm):
+    """
+    Convert normalized noise level (0-1) to an RMS threshold in int16 units.
+    Multiplier tunes sensitivity.
+    """
+    noise_rms = noise_level_norm * 32768.0
+    # multiplier: 2.5–4.0 typical. Increase if it still won't stop.
+    return max(200.0, noise_rms * 3.0)
+
+"ADDED CHAT CODE"
 
 def classify_mpt(mpt_value):
     """
