@@ -305,7 +305,6 @@ def classify_mpt(mpt_value):
     if mpt_value < 8:
         return {
             'urgency': 'IMMEDIATE',
-            'esi_level': 1,
             'category': 'Severe respiratory compromise',
             'action': 'Immediate medical intervention required',
             'color': 'RED'
@@ -314,7 +313,6 @@ def classify_mpt(mpt_value):
     elif mpt_value < 10:
         return {
             'urgency': 'URGENT',
-            'esi_level': 2,
             'category': 'Significant respiratory impairment',
             'action': 'Urgent medical evaluation needed',
             'color': 'ORANGE'
@@ -323,7 +321,6 @@ def classify_mpt(mpt_value):
     elif mpt_value < 15:
         return {
             'urgency': 'CONCERNING',
-            'esi_level': 2,
             'category': 'Below normal respiratory reserve',
             'action': 'Medical evaluation recommended',
             'color': 'YELLOW'
@@ -332,7 +329,6 @@ def classify_mpt(mpt_value):
     elif mpt_value < 20:
         return {
             'urgency': 'BORDERLINE',
-            'esi_level': 3,
             'category': 'Lower end of normal',
             'action': 'Monitor for changes',
             'color': 'YELLOW'
@@ -341,7 +337,6 @@ def classify_mpt(mpt_value):
     else:
         return {
             'urgency': 'NORMAL',
-            'esi_level': 4,
             'category': 'Normal respiratory reserve',
             'action': 'No immediate concerns',
             'color': 'GREEN'
